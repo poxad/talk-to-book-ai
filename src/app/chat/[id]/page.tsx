@@ -76,7 +76,11 @@ export default function Chatbot() {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ user_input: message, book: book }),
+				body: JSON.stringify({
+					chat_history: messages,
+					user_input: message,
+					book: book,
+				}),
 			});
 
 			if (!response.ok) {
@@ -117,6 +121,14 @@ export default function Chatbot() {
 		} finally {
 			setIsLoading(false);
 		}
+	};
+
+	const formatTextWithParagraphs = (text) => {
+		return text.split("\n\n").map((paragraph, index) => (
+			<ReactMarkdown key={index} className="mb-4">
+				{paragraph}
+			</ReactMarkdown>
+		));
 	};
 
 	const regenerateResponse = async (messageIndex) => {
@@ -187,13 +199,13 @@ export default function Chatbot() {
 	}, []);
 
 	return (
-		<div className="flex h-screen bg-gradient-to-br from-blue-100 to-white text-gray-900">
+		<div className="flex h-screen bg-gray-800 text-gray-900">
 			<Sidebar onNewChat={handleNewChat} book={book} currentChatId={id} />
-			<div className="flex flex-col flex-1 items-center p-8 gap-6 overflow-y-auto">
-				<h1 className="text-4xl font-extrabold text-blue-600 mb-6">
+			<div className="flex flex-col flex-1 items-center p-4 md:p-8 gap-4 md:gap-6 overflow-y-auto">
+				<h1 className="text-2xl md:text-4xl font-extrabold text-white mb-4">
 					Chatbot for "{book}"
 				</h1>
-				<div className="w-full flex-1 rounded-2xl p-6 bg-white shadow-lg flex flex-col gap-4">
+				<div className="w-full flex-1 rounded-2xl p-4 md:p-6 flex flex-col gap-4">
 					{messages.map((msg, index) => (
 						<div
 							key={index}
@@ -202,33 +214,31 @@ export default function Chatbot() {
 							}`}
 						>
 							{msg.sender === "bot" && (
-								<div className="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-full shadow-md">
+								<div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gray-500 text-white rounded-full shadow-md mt-2">
 									AI
 								</div>
 							)}
 							<div
-								className={`group relative p-4 rounded-2xl max-w-[70%] ${
+								className={`group relative p-3 md:p-4 rounded-2xl max-w-[80%] md:max-w-[70%] ${
 									msg.sender === "user"
-										? "bg-blue-500 text-white"
-										: "bg-gray-100 text-gray-800"
+										? "bg-gray-700 text-white"
+										: "text-white"
 								} shadow-sm transition-all duration-200 ease-in-out`}
 							>
 								{msg.sender === "user" && (
 									<button
-										className="absolute -left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 bg-gray-200 rounded-full hover:bg-gray-300"
+										className="absolute -left-10 md:-left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 bg-gray-200 rounded-full hover:bg-gray-300"
 										onClick={() => regenerateResponse(index)}
 										title="Regenerate response"
 									>
 										<FaSync className="text-gray-700" />
 									</button>
 								)}
-								<div className="whitespace-pre-line">
-									<ReactMarkdown>{msg.text}</ReactMarkdown>
-								</div>
+								<div>{formatTextWithParagraphs(msg.text)}</div>
 							</div>
 
 							{msg.sender === "user" && (
-								<div className="w-10 h-10 flex items-center justify-center bg-gray-500 text-white rounded-full shadow-md">
+								<div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gray-500 text-white rounded-full shadow-md mt-2">
 									U
 								</div>
 							)}
@@ -238,7 +248,7 @@ export default function Chatbot() {
 						suggestedPrompts.map((prompt, index) => (
 							<button
 								key={index}
-								className="ml-12 p-3 text-left max-w-[90%] text-gray-800 bg-gray-100 rounded-2xl hover:bg-gray-200 transition-all duration-200 ease-in-out shadow-sm border border-gray-200"
+								className="ml-10 md:ml-12 p-2 md:p-3 text-left max-w-[90%] text-white bg-gray-700 rounded-2xl hover:bg-gray-800 transition-all duration-200 ease-in-out shadow-sm border border-gray-200"
 								onClick={() => sendMessage(prompt)}
 								disabled={isLoading}
 							>
@@ -247,10 +257,10 @@ export default function Chatbot() {
 						))}
 					{isLoading && (
 						<div className="flex items-start gap-3 justify-start">
-							<div className="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-full shadow-md">
+							<div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gray-500 text-white rounded-full shadow-md">
 								AI
 							</div>
-							<div className="p-4 rounded-2xl max-w-[70%] bg-gray-100 text-gray-800 shadow-sm">
+							<div className="p-3 md:p-4 rounded-2xl max-w-[80%] md:max-w-[70%] bg-gray-100 text-gray-800 shadow-sm">
 								<div className="flex items-center gap-2">
 									<div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
 									<div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100"></div>
@@ -260,9 +270,9 @@ export default function Chatbot() {
 						</div>
 					)}
 				</div>
-				<div className="w-3/4 flex gap-2 p-4 bg-white rounded-2xl shadow-lg sticky bottom-0">
+				<div className="w-full md:w-3/4 flex gap-2 p-2 md:p-4 bg-gray-700 rounded-2xl shadow-lg sticky bottom-0">
 					<input
-						className="flex-1 p-3 border border-gray-300 rounded-2xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+						className="flex-1 p-2 md:p-3 rounded-2xl bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-sm md:text-base"
 						type="text"
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
@@ -271,11 +281,11 @@ export default function Chatbot() {
 						disabled={isLoading}
 					/>
 					<button
-						className="flex items-center justify-center p-3 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all shadow-md"
+						className="flex items-center justify-center p-2 md:p-3 bg-gray-500 text-white rounded-2xl hover:bg-gray-600 transition-all shadow-md w-10 md:w-12"
 						onClick={() => sendMessage()}
 						disabled={isLoading}
 					>
-						<FaPaperPlane size={20} />
+						<FaPaperPlane className="w-4 h-4 md:w-5 md:h-5" />
 					</button>
 				</div>
 			</div>

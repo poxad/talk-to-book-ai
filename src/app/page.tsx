@@ -9,6 +9,7 @@ export default function Home() {
 	const [bookName, setBookName] = useState("");
 	const router = useRouter();
 	const [isEmptyInput, setIsEmptyInput] = useState(false);
+
 	const startChat = () => {
 		if (bookName.trim() === "") {
 			setIsEmptyInput(true); // Show warning if input is empty
@@ -19,20 +20,20 @@ export default function Home() {
 	};
 
 	return (
-		<div className="flex h-screen bg-gradient-to-br from-blue-100 to-white text-gray-900">
+		<div className="flex h-screen bg-gray-900 text-gray-100">
 			<Sidebar />
 			<div className="flex flex-col items-center justify-center flex-1 p-6">
-				<div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md text-center">
-					<h1 className="text-4xl font-extrabold text-blue-600 mb-6">
+				<div className="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-md text-center">
+					<h1 className="text-4xl font-extrabold text-gray-100 mb-6">
 						📚 Talk to Book AI
 					</h1>
-					<p className="text-gray-600 mb-4 text-lg">
+					<p className="text-gray-300 mb-4 text-lg">
 						Chat with AI about your favorite books!
 					</p>
 					<input
 						className={`p-3 border ${
-							isEmptyInput ? "border-red-500" : "border-gray-300"
-						} rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none mb-2 text-gray-800 shadow-sm`}
+							isEmptyInput ? "border-red-500" : "border-gray-600"
+						} rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none mb-2 text-gray-100 bg-gray-700 shadow-sm`}
 						type="text"
 						value={bookName}
 						onChange={(e) => {
@@ -47,7 +48,7 @@ export default function Home() {
 						</p>
 					)}
 					<button
-						className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold shadow-md"
+						className="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all font-semibold shadow-md mt-5"
 						onClick={startChat}
 					>
 						🚀 Start Chat

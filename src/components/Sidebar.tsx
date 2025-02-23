@@ -78,7 +78,9 @@ export default function Sidebar({ onNewChat, book, currentChatId }) {
 		>
 			<div className="flex justify-between items-center mb-4">
 				{!collapsed && (
-					<h2 className="text-xl font-bold text-blue-400">📖 Book AI</h2>
+					<h2 className="text-xl font-bold text-blue-400">
+						📖 Talk to Book AI
+					</h2>
 				)}
 				<button
 					className="p-2 bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 transition-all"
@@ -90,19 +92,21 @@ export default function Sidebar({ onNewChat, book, currentChatId }) {
 			{!collapsed && (
 				<>
 					<button
-						className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-500 transition-all"
+						className="w-full py-3  text-white font-semibold rounded-lg shadow-md bg-blue-500 transition-all hover:bg-blue-400 mb-4"
 						onClick={startNewChat}
 					>
 						💬 New Chat
 					</button>
-					<div className="flex flex-col gap-3 overflow-y-auto flex-1 mt-4">
+					<div className="flex flex-col gap-3 overflow-y-auto flex-1">
 						{history.map((chat) => (
 							<div
 								key={chat.id}
-								className="group p-3 bg-gray-700 rounded-lg shadow-sm cursor-pointer hover:bg-gray-600 flex justify-between items-center transition-all"
+								className={`group p-2 rounded-lg shadow-sm cursor-pointer hover:bg-gray-600 flex justify-between items-center transition-all ${
+									chat.id === currentChatId ? "bg-gray-700" : ""
+								}`}
 								onClick={() => navigateToChat(chat)}
 							>
-								<span className="font-medium text-gray-200">
+								<span className="font-medium text-gray-200 truncate max-w-[70%]">
 									{chat.title} ({chat.book})
 								</span>
 								<button
