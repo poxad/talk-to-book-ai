@@ -88,35 +88,6 @@ The mapping is optional and should only be used if relevant information is avail
 Now, answer the following query about the book or ISBN code: {book}
 
 User query: {user_input}
-
-Example response in markdown format:
-"Atomic Habits" by James Clear provides a framework for improving habits through small changes, focusing on systems rather than goals.
-
-Here's how "Atomic Habits" differentiates itself from other self-help books:
-
-*   **Focus on Systems, Not Goals:**
-    *   Many self-help books emphasize setting ambitious goals. Clear argues that you should focus on the systems and processes that lead to those goals. He believes that improving your systems by just 1% each day leads to remarkable results over time.
-
-*   **The Four Laws of Behavior Change:**
-    *   "Atomic Habits" introduces a practical framework called the Four Laws of Behavior Change (Cue, Craving, Response, and Reward), which provides actionable steps for building good habits and breaking bad ones.
-    *   This framework is simple and memorable, making it easy to apply the book's principles in real life.
-
-*   **Emphasis on Small Changes:**
-    *   Instead of advocating for drastic changes, "Atomic Habits" emphasizes making small, incremental improvements.
-    *   The concept of "atomic habits" suggests that tiny changes accumulate over time to produce significant results.
-
-*   **Actionable Strategies:**
-    *   Unlike some self-help books that focus on abstract concepts or motivational stories, "Atomic Habits" provides concrete strategies and techniques.
-    *   These strategies include habit stacking, temptation bundling, making habits obvious, attractive, easy, and satisfying.
-
-*   **Science-Backed Principles:**
-    *   The book draws on scientific research from various fields, including psychology, neuroscience, and behavioral economics.
-    *   Clear integrates scientific findings with practical advice, making the book both informative and applicable.
-
-In summary, "Atomic Habits" stands out due to its focus on systems, actionable strategies, emphasis on small changes, and science-backed principles, making it a practical guide for anyone looking to improve their habits and achieve long-term success.
-
-
-
 """
 
 
