@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import ReactDom from "react-dom";
 import Sidebar from "../../../components/Sidebar";
 import { useParams, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import { FaPaperPlane, FaSync } from "react-icons/fa"; // Import the refresh icon
+import { MarkdownHooks } from "react-markdown";
+import { FaPaperPlane, FaSync } from "react-icons/fa";
 import remarkBreaks from "remark-breaks";
 import { v4 as uuidv4 } from "uuid";
-
+import { supabase } from "../../supabaseClient"; // Import Supabase client
 export default function Chatbot() {
 	const { id } = useParams();
 	const [messages, setMessages] = useState([]);
@@ -18,27 +20,80 @@ export default function Chatbot() {
 	const book = searchParams.get("book");
 	const hasFetched = useRef(false);
 
-	// Load chat history
+	// Load chat history from Supabase
 	useEffect(() => {
-		if (id) {
-			const savedChat =
-				JSON.parse(localStorage.getItem(`chatHistory-${id}`)) || [];
-			if (savedChat.length > 0) {
-				setMessages(savedChat);
-			} else {
-				setMessages([
-					{ text: "Hello! How can I assist you today?", sender: "bot" },
-				]);
+		const fetchChatHistory = async () => {
+			if (id) {
+				const { data, error } = await supabase
+					.from("chat_history")
+					.select("message")
+					.eq("chat_id", id)
+					.single();
+				console.log("id: ", id);
+				// console.log("Current message in id: ", data.message);
+				// if (error) {
+				// 	console.error("Error fetching chat history:", error);
+				// 	return;
+				// }
+
+				if (data && data.message && data.message.length > 0) {
+					// Set the messages state with the fetched message array
+					setMessages(data.message);
+				} else {
+					// Set a default welcome message if no history exists
+					setMessages([
+						{ text: "Hello! How can I assist you today?", sender: "bot" },
+					]);
+				}
 			}
-		}
+		};
+		fetchChatHistory();
 	}, [id]);
 
-	// Save chat history
+	// Save chat history to Supabase
 	useEffect(() => {
-		if (id) {
-			localStorage.setItem(`chatHistory-${id}`, JSON.stringify(messages));
-		}
-	}, [messages, id]);
+		const saveChatHistory = async () => {
+			if (id && messages.length > 0) {
+				// Fetch the existing message array for the chat_id
+				const { data: existingChat, error: fetchError } = await supabase
+					.from("chat_history")
+					.select("message")
+					.eq("chat_id", id)
+					.single();
+
+				if (fetchError && fetchError.code !== "PGRST116") {
+					console.error("Error fetching existing chat history:", fetchError);
+					return;
+				}
+
+				// Initialize the message array
+				// console.log("existingChat: ", existingChat);
+				const existingMessages = existingChat?.message || [];
+				// console.log("existingMessages: ", existingMessages);
+
+				// Check if the new messages are already in the existing messages
+				const newMessages = messages.slice(existingMessages.length);
+
+				if (newMessages.length > 0) {
+					// Append the new messages to the existing array
+					const updatedMessages = [...existingMessages, ...newMessages];
+
+					// Update the row in the chat_history table
+					const { error: updateError } = await supabase
+						.from("chat_history")
+						.upsert([{ chat_id: id, message: updatedMessages }], {
+							onConflict: "chat_id", // Handle conflicts based on chat_id
+						});
+
+					if (updateError) {
+						console.error("Error saving chat history:", updateError);
+					}
+				}
+			}
+		};
+
+		saveChatHistory();
+	}, [messages, id]); // Save chat history whenever `messages` or `id` changes
 
 	const fetchSuggestedPrompts = async () => {
 		try {
@@ -71,6 +126,34 @@ export default function Chatbot() {
 		setSuggestedPrompts([]);
 
 		try {
+			// Fetch the existing message array for the chat_id
+			const { data: existingChat, error: fetchError } = await supabase
+				.from("chat_history")
+				.select("message")
+				.eq("chat_id", id)
+				.single();
+
+			if (fetchError && fetchError.code !== "PGRST116") {
+				throw fetchError;
+			}
+
+			// Initialize the message array
+			const existingMessages = existingChat?.message || [];
+
+			// Append the new user message to the array
+			const updatedMessages = [...existingMessages, userMessage];
+
+			// Update the row in the chat_history table
+			const { error: updateError } = await supabase
+				.from("chat_history")
+				.update({ message: updatedMessages })
+				.eq("chat_id", id);
+
+			if (updateError) {
+				throw updateError;
+			}
+
+			// Send message to the backend and get bot response
 			const response = await fetch("http://127.0.0.1:8000/chat", {
 				method: "POST",
 				headers: {
@@ -108,9 +191,25 @@ export default function Chatbot() {
 				fullResponse += chunk;
 			}
 
+			// Append the bot message to the existing message array
+			const updatedMessagesWithBot = [
+				...updatedMessages,
+				{ text: fullResponse, sender: "bot" },
+			];
+
+			// Update the row in the chat_history table
+			const { error: botMessageError } = await supabase
+				.from("chat_history")
+				.update({ message: updatedMessagesWithBot })
+				.eq("chat_id", id);
+
+			if (botMessageError) {
+				throw botMessageError;
+			}
+
 			await fetchSuggestedPrompts();
 		} catch (error) {
-			console.error("Error calling FastAPI backend:", error);
+			console.error("Error:", error);
 			setMessages((prev) => [
 				...prev,
 				{
@@ -122,12 +221,14 @@ export default function Chatbot() {
 			setIsLoading(false);
 		}
 	};
-
 	const formatTextWithParagraphs = (text) => {
+		// console.log(text);f
 		return text.split("\n\n").map((paragraph, index) => (
-			<ReactMarkdown key={index} className="mb-4">
-				{paragraph}
-			</ReactMarkdown>
+			<div key={uuidv4()} className="markdown-content">
+				<ReactMarkdown key={index} className="mb-4 ">
+					{paragraph}
+				</ReactMarkdown>
+			</div>
 		));
 	};
 
@@ -138,29 +239,55 @@ export default function Chatbot() {
 		setIsLoading(true);
 
 		try {
+			// Delete all messages after the user's message
+			const updatedMessages = messages.slice(0, messageIndex + 1);
+
+			// Update the local state to reflect the deleted messages
+			setMessages(updatedMessages);
+
+			// Update the row in the chat_history table to remove the deleted messages
+			const { error: updateError } = await supabase
+				.from("chat_history")
+				.update({ message: updatedMessages })
+				.eq("chat_id", id);
+
+			if (updateError) {
+				throw updateError;
+			}
+
+			// Send the user message and updated chat history to the backend
 			const response = await fetch("http://127.0.0.1:8000/chat", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ user_input: userMessage.text, book: book }),
+				body: JSON.stringify({
+					user_input: userMessage.text,
+					book: book,
+					chat_history: updatedMessages, // Send only the relevant chat history
+				}),
 			});
 
 			if (!response.ok) {
 				throw new Error("Failed to fetch response from the server");
 			}
 
+			// Create a placeholder for the bot's response
 			const botMessage = { text: "", sender: "bot" };
-			setMessages((prev) => [...prev.slice(0, messageIndex + 1), botMessage]);
+			setMessages((prev) => [...prev, botMessage]);
 
+			// Stream the bot's response incrementally
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 			let done = false;
-			let fullResponse = "";
+			let fullResponse = ""; // Declare fullResponse outside the loop
+
 			while (!done) {
 				const { value, done: readerDone } = await reader.read();
 				done = readerDone;
 				const chunk = decoder.decode(value, { stream: true });
+
+				// Update the bot's message incrementally
 				setMessages((prev) =>
 					prev.map((msg, idx) =>
 						idx === prev.length - 1 && msg.sender === "bot"
@@ -168,10 +295,29 @@ export default function Chatbot() {
 							: msg
 					)
 				);
-				fullResponse += chunk;
+
+				fullResponse += chunk; // Append the chunk to fullResponse
+
+				// Add a small delay to simulate streaming
+				await new Promise((resolve) => setTimeout(resolve, 50)); // 50ms delay
+			}
+
+			// Append the bot's response to the chat history in Supabase
+			const finalMessages = [
+				...updatedMessages,
+				{ text: fullResponse, sender: "bot" },
+			];
+
+			const { error: botMessageError } = await supabase
+				.from("chat_history")
+				.update({ message: finalMessages })
+				.eq("chat_id", id);
+
+			if (botMessageError) {
+				throw botMessageError;
 			}
 		} catch (error) {
-			console.error("Error calling FastAPI backend:", error);
+			console.error("Error:", error);
 			setMessages((prev) => [
 				...prev,
 				{
@@ -185,10 +331,13 @@ export default function Chatbot() {
 	};
 
 	const handleNewChat = () => {
+		const newChatId = uuidv4();
 		setMessages([
 			{ text: "Hello! How can I assist you today?", sender: "bot" },
 		]);
 		setSuggestedPrompts([]);
+		// Optionally, navigate to the new chat URL
+		// router.push(`/chat/${newChatId}?book=${book}`);
 	};
 
 	useEffect(() => {
@@ -199,10 +348,10 @@ export default function Chatbot() {
 	}, []);
 
 	return (
-		<div className="flex h-screen bg-gray-800 text-gray-900">
+		<div className="flex h-screen bg-gray-900 text-gray-900">
 			<Sidebar onNewChat={handleNewChat} book={book} currentChatId={id} />
 			<div className="flex flex-col flex-1 items-center p-4 md:p-8 gap-4 md:gap-6 overflow-y-auto">
-				<h1 className="text-2xl md:text-4xl font-extrabold text-white mb-4">
+				<h1 className=" md:text-2xl font-extrabold text-white mb-2">
 					Chatbot for "{book}"
 				</h1>
 				<div className="w-full flex-1 rounded-2xl p-4 md:p-6 flex flex-col gap-4">
@@ -223,7 +372,7 @@ export default function Chatbot() {
 									msg.sender === "user"
 										? "bg-gray-700 text-white"
 										: "text-white"
-								} shadow-sm transition-all duration-200 ease-in-out`}
+								}  transition-all duration-200 ease-in-out`}
 							>
 								{msg.sender === "user" && (
 									<button
@@ -234,7 +383,7 @@ export default function Chatbot() {
 										<FaSync className="text-gray-700" />
 									</button>
 								)}
-								<div>{formatTextWithParagraphs(msg.text)}</div>
+								{formatTextWithParagraphs(msg.text)}
 							</div>
 
 							{msg.sender === "user" && (

@@ -19,3 +19,71 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+/* Container layout */
+.container {
+	max-width: 900px;
+	margin: 20px auto;
+	padding: 20px;
+	background: #ffffff;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	border-radius: 10px;
+}
+
+
+
+.markdown-content h1 {
+	font-size: 2rem;
+	border-bottom: 2px solid #e1e4e8;
+	padding-bottom: 0.3em;
+	margin-bottom: 1em;
+}
+
+.markdown-content h2 {
+	font-size: 1.5rem;
+}
+
+
+.markdown-content ul {
+	padding-left: 20px;
+}
+
+.markdown-content li {
+	margin: 0.5em 0;
+	padding-left: 1.5em;
+	position: relative;
+}
+
+/* Custom bullet point */
+.markdown-content li::before {
+	content: "•"; /* Bullet point symbol */
+	color: white; /* Bullet color */
+  opacity: 0.7;
+	font-weight: bold;
+	font-size: 1.2em;
+	position: absolute;
+	left: 0;
+	top: 0.1em;
+}
+/* Add some flair to block elements */
+.markdown-content pre { 
+	padding: 10px;
+	border-radius: 5px;
+	overflow-x: auto;
+}
+
+.markdown-content blockquote {
+	border-left: 4px solid #0366d6;
+	padding-left: 10px;
+	color: #6a737d;
+	margin: 20px 0;
+	font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.container {
+		padding: 15px;
+	}
+}

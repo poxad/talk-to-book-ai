@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../components/Sidebar";
 import { v4 as uuidv4 } from "uuid";
-
+import { supabase } from "../app/supabaseClient";
 export default function Home() {
 	const [bookName, setBookName] = useState("");
 	const router = useRouter();
@@ -18,7 +18,25 @@ export default function Home() {
 		const newChatId = uuidv4();
 		router.push(`/chat/${newChatId}?book=${bookName}`);
 	};
+	const fetchData = async () => {
+		try {
+			const { data, error } = await supabase
+				.from("chat_history") // Replace with your table name
+				.select("*");
 
+			if (error) {
+				throw error;
+			}
+
+			console.log("Data from Supabase:", data);
+		} catch (error) {
+			console.error("Error fetching data:", error);
+		}
+	};
+
+	useEffect(() => {
+		fetchData();
+	}, []);
 	return (
 		<div className="flex h-screen bg-gray-900 text-gray-100">
 			<Sidebar />
